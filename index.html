@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Work Tracker</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f4f8;color:#1a2332;min-height:100vh}
+
+/* Nav */
+.nav{background:#1e3a5f;color:#fff;display:flex;flex-direction:column;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.nav-title{padding:14px 20px 6px;font-size:1.1rem;font-weight:700;letter-spacing:.5px}
+.nav-tabs{display:flex;overflow-x:auto;scrollbar-width:none}
+.nav-tabs::-webkit-scrollbar{display:none}
+.nav-tab{padding:10px 20px;cursor:pointer;font-size:.83rem;font-weight:500;color:rgba(255,255,255,.65);border-bottom:3px solid transparent;white-space:nowrap;transition:all .2s}
+.nav-tab.active{color:#fff;border-bottom-color:#f59e0b}
+.nav-tab:hover{color:#fff;background:rgba(255,255,255,.06)}
+
+/* Layout */
+.content{padding:16px;max-width:900px;margin:0 auto}
+.tab-panel{display:none}.tab-panel.active{display:block}
+
+/* Cards */
+.card{background:#fff;border-radius:12px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+
+/* Stats */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:18px}
+.stat-card{background:#fff;border-radius:12px;padding:14px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.stat-num{font-size:2rem;font-weight:700}
+.stat-label{font-size:.72rem;color:#64748b;margin-top:3px}
+.stat-card.danger .stat-num{color:#ef4444}
+.stat-card.warning .stat-num{color:#f59e0b}
+.stat-card.success .stat-num{color:#10b981}
+.stat-card.info .stat-num{color:#3b82f6}
+
+/* Section */
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.section-title{font-size:.95rem;font-weight:700;color:#1e3a5f}
+
+/* Buttons */
+.btn{padding:7px 14px;border-radius:8px;border:none;cursor:pointer;font-size:.82rem;font-weight:500;transition:all .15s;display:inline-flex;align-items:center;gap:4px}
+.btn-primary{background:#1e3a5f;color:#fff}.btn-primary:hover{background:#162d4a}
+.btn-success{background:#10b981;color:#fff}.btn-success:hover{background:#059669}
+.btn-danger{background:#ef4444;color:#fff}.btn-danger:hover{background:#dc2626}
+.btn-warning{background:#f59e0b;color:#fff}.btn-warning:hover{background:#d97706}
+.btn-outline{background:transparent;border:1px solid #cbd5e1;color:#475569}.btn-outline:hover{background:#f8fafc}
+.btn-sm{padding:4px 10px;font-size:.76rem}
+
+/* Badges */
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.badge-high{background:#fee2e2;color:#dc2626}
+.badge-medium{background:#fef3c7;color:#d97706}
+.badge-low{background:#dcfce7;color:#16a34a}
+.badge-done,.badge-completed{background:#e0e7ff;color:#4338ca}
+.badge-pending,.badge-not-started,.badge-active{background:#f1f5f9;color:#475569}
+.badge-in-progress{background:#dbeafe;color:#1d4ed8}
+.badge-won{background:#dcfce7;color:#15803d}
+.badge-lost{background:#fee2e2;color:#b91c1c}
+.badge-result-awaited,.badge-awaited{background:#fef3c7;color:#92400e}
+.badge-submitted{background:#ede9fe;color:#6d28d9}
+.badge-checked{background:#e0f2fe;color:#0369a1}
+
+/* Filters */
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.filter-btn{padding:4px 12px;border-radius:20px;border:1px solid #e2e8f0;background:#fff;font-size:.76rem;cursor:pointer;transition:all .15s}
+.filter-btn.active{background:#1e3a5f;color:#fff;border-color:#1e3a5f}
+
+/* Sub-tabs */
+.sub-tabs{display:flex;border-bottom:2px solid #e2e8f0;margin-bottom:14px}
+.sub-tab{padding:9px 18px;cursor:pointer;font-size:.86rem;font-weight:500;color:#64748b;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s}
+.sub-tab.active{color:#1e3a5f;border-bottom-color:#1e3a5f}
+
+/* Task cards */
+.task-card{border-left:4px solid #e2e8f0}
+.task-card.high{border-left-color:#ef4444}
+.task-card.medium{border-left-color:#f59e0b}
+.task-card.low{border-left-color:#10b981}
+.task-card.done-task{opacity:.55}
+.task-header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.task-name{font-weight:600;font-size:.93rem;flex:1}
+.task-meta{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;align-items:center}
+.task-notes{font-size:.8rem;color:#64748b;margin-top:6px;font-style:italic;line-height:1.4}
+.task-actions{display:flex;gap:5px;margin-top:9px;flex-wrap:wrap}
+.recurring-tag{background:#ede9fe;color:#7c3aed;font-size:.7rem;padding:2px 8px;border-radius:20px}
+.overdue-txt{color:#ef4444;font-weight:600;font-size:.78rem}
+.today-txt{color:#f59e0b;font-weight:600;font-size:.78rem}
+.normal-date{color:#64748b;font-size:.78rem}
+
+/* Tender cards */
+.tender-name{font-weight:600;font-size:.93rem;flex:1;margin-right:8px}
+.tender-details{display:grid;grid-template-columns:1fr 1fr;gap:3px 14px;margin-top:7px}
+.tender-detail{font-size:.79rem;color:#475569}
+.tender-detail span{color:#1a2332;font-weight:500}
+.tender-actions{display:flex;gap:5px;margin-top:9px;flex-wrap:wrap}
+.dl-warn{color:#ef4444;font-weight:600}
+.dl-today{color:#f59e0b;font-weight:600}
+
+/* History table */
+.hist-wrap{overflow-x:auto}
+.history-table{width:100%;border-collapse:collapse;font-size:.8rem;min-width:700px}
+.history-table th{background:#1e3a5f;color:#fff;padding:9px 11px;text-align:left;font-weight:500;white-space:nowrap}
+.history-table td{padding:9px 11px;border-bottom:1px solid #f1f5f9;vertical-align:top}
+.history-table tr:hover td{background:#f8fafc}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;padding:14px}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:500px;max-height:92vh;overflow-y:auto}
+.modal-header{padding:18px 18px 0;display:flex;justify-content:space-between;align-items:center}
+.modal-title{font-size:1rem;font-weight:700;color:#1e3a5f}
+.modal-close{background:none;border:none;font-size:1.4rem;cursor:pointer;color:#64748b;line-height:1;padding:4px}
+.modal-body{padding:14px 18px 18px}
+
+/* Form */
+.form-group{margin-bottom:12px}
+.form-label{display:block;font-size:.8rem;font-weight:500;color:#374151;margin-bottom:4px}
+.form-control{width:100%;padding:8px 11px;border:1px solid #e2e8f0;border-radius:8px;font-size:.86rem;color:#1a2332;background:#fff;transition:border .2s;font-family:inherit}
+.form-control:focus{outline:none;border-color:#1e3a5f}
+textarea.form-control{resize:vertical;min-height:72px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+
+/* Loading / Empty / Toast */
+.loading{text-align:center;padding:36px;color:#64748b}
+.empty{text-align:center;padding:40px 20px;color:#94a3b8}
+.empty-icon{font-size:2.2rem;margin-bottom:8px}
+.spinner{display:inline-block;width:26px;height:26px;border:3px solid #e2e8f0;border-top-color:#1e3a5f;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:18px;right:18px;background:#1e3a5f;color:#fff;padding:11px 18px;border-radius:10px;font-size:.85rem;z-index:2000;opacity:0;transform:translateY(8px);transition:all .25s;max-width:280px;line-height:1.4}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.error{background:#ef4444}
+.toast.success{background:#10b981}
+
+/* Setup banner */
+.setup-banner{background:#fff3cd;border:1px solid #ffc107;border-radius:10px;padding:14px 16px;margin-bottom:16px;font-size:.85rem;line-height:1.6;color:#856404}
+.setup-banner strong{color:#533f03}
+.setup-banner code{background:#fff;border:1px solid #ffc107;border-radius:4px;padding:1px 5px;font-size:.82rem}
+
+@media(max-width:580px){
+  .form-row{grid-template-columns:1fr}
+  .tender-details{grid-template-columns:1fr}
+  .stats-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <div class="nav-title">Work Tracker</div>
+  <div class="nav-tabs">
+    <div class="nav-tab active"  onclick="switchTab('dashboard')">Dashboard</div>
+    <div class="nav-tab"         onclick="switchTab('tasks')">Tasks</div>
+    <div class="nav-tab"         onclick="switchTab('tenders')">Tenders</div>
+    <div class="nav-tab"         onclick="switchTab('history')">History</div>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- DASHBOARD -->
+  <div id="tab-dashboard" class="tab-panel active">
+    <div class="stats-grid">
+      <div class="stat-card info">   <div class="stat-num" id="s-total">-</div>  <div class="stat-label">Active Tasks</div></div>
+      <div class="stat-card danger"> <div class="stat-num" id="s-over">-</div>   <div class="stat-label">Overdue</div></div>
+      <div class="stat-card warning"><div class="stat-num" id="s-today">-</div>  <div class="stat-label">Due Today</div></div>
+      <div class="stat-card success"><div class="stat-num" id="s-tender">-</div> <div class="stat-label">Active Tenders</div></div>
+    </div>
+    <div id="dash-content"><div class="loading"><div class="spinner"></div></div></div>
+  </div>
+
+  <!-- TASKS -->
+  <div id="tab-tasks" class="tab-panel">
+    <div class="section-header">
+      <div class="section-title">Tasks</div>
+      <button class="btn btn-primary" onclick="openTaskModal()">+ Add Task</button>
+    </div>
+    <div class="filters" id="task-filters">
+      <button class="filter-btn active" onclick="setTaskFilter('all',this)">All</button>
+      <button class="filter-btn" onclick="setTaskFilter('High',this)">High</button>
+      <button class="filter-btn" onclick="setTaskFilter('Medium',this)">Medium</button>
+      <button class="filter-btn" onclick="setTaskFilter('Low',this)">Low</button>
+      <button class="filter-btn" onclick="setTaskFilter('recurring',this)">Recurring</button>
+      <button class="filter-btn" onclick="setTaskFilter('done',this)">Done</button>
+    </div>
+    <div id="tasks-list"><div class="loading"><div class="spinner"></div></div></div>
+  </div>
+
+  <!-- TENDERS -->
+  <div id="tab-tenders" class="tab-panel">
+    <div class="sub-tabs">
+      <div class="sub-tab active" onclick="switchTenderTab('fill',this)">To Fill <span id="fill-ct"></span></div>
+      <div class="sub-tab"       onclick="switchTenderTab('check',this)">To Check <span id="check-ct"></span></div>
+    </div>
+    <div id="panel-fill">
+      <div class="section-header">
+        <div class="section-title">Tenders to Fill</div>
+        <button class="btn btn-primary" onclick="openTenderModal('fill')">+ Add Tender</button>
+      </div>
+      <div id="list-fill"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+    <div id="panel-check" style="display:none">
+      <div class="section-header">
+        <div class="section-title">Tenders to Check</div>
+        <button class="btn btn-primary" onclick="openTenderModal('check')">+ Add Tender</button>
+      </div>
+      <div id="list-check"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div id="tab-history" class="tab-panel">
+    <div class="section-header">
+      <div class="section-title">Tender History</div>
+    </div>
+    <div class="filters" id="hist-filters">
+      <button class="filter-btn active" onclick="setHistFilter('all',this)">All</button>
+      <button class="filter-btn" onclick="setHistFilter('Won',this)">Won</button>
+      <button class="filter-btn" onclick="setHistFilter('Lost',this)">Lost</button>
+      <button class="filter-btn" onclick="setHistFilter('Result Awaited',this)">Result Awaited</button>
+      <button class="filter-btn" onclick="setHistFilter('Fill',this)">Submitted</button>
+      <button class="filter-btn" onclick="setHistFilter('Check',this)">Checked</button>
+    </div>
+    <div id="hist-content"><div class="loading"><div class="spinner"></div></div></div>
+  </div>
+
+</div>
+
+<!-- ═══ TASK MODAL ═══ -->
+<div class="modal-overlay" id="modal-task">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="task-modal-title">Add Task</div>
+      <button class="modal-close" onclick="closeModal('modal-task')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="t-id">
+      <div class="form-group">
+        <label class="form-label">Task Name *</label>
+        <input id="t-name" class="form-control" placeholder="Enter task name">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Priority *</label>
+          <select id="t-priority" class="form-control">
+            <option value="High">High</option>
+            <option value="Medium" selected>Medium</option>
+            <option value="Low">Low</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select id="t-status" class="form-control">
+            <option value="Not Started">Not Started</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Done">Done</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Due Date</label>
+        <input type="date" id="t-due" class="form-control">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Recurring</label>
+          <select id="t-recur" class="form-control" onchange="toggleRecurDay()">
+            <option value="none">None</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+          </select>
+        </div>
+        <div class="form-group" id="recur-day-grp" style="display:none">
+          <label class="form-label" id="recur-day-lbl">Day</label>
+          <select id="t-recur-day" class="form-control"></select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea id="t-notes" class="form-control" placeholder="Optional notes..."></textarea>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-outline" onclick="closeModal('modal-task')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveTask()">Save Task</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TENDER MODAL ═══ -->
+<div class="modal-overlay" id="modal-tender">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="tender-modal-title">Add Tender</div>
+      <button class="modal-close" onclick="closeModal('modal-tender')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="tr-id">
+      <input type="hidden" id="tr-type">
+      <div class="form-group">
+        <label class="form-label">Tender Name *</label>
+        <input id="tr-name" class="form-control" placeholder="Tender name / description">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Reference No.</label>
+          <input id="tr-ref" class="form-control" placeholder="Ref / Tender No.">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Submission Mode</label>
+          <select id="tr-mode" class="form-control">
+            <option value="">-- Select --</option>
+            <option value="Online">Online</option>
+            <option value="Offline">Offline</option>
+            <option value="Both">Both</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Client / Authority</label>
+        <input id="tr-client" class="form-control" placeholder="Client or authority name">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Estimated Value (₹)</label>
+          <input id="tr-value" class="form-control" placeholder="e.g. 50,00,000">
+        </div>
+        <div class="form-group">
+          <label class="form-label" id="tr-date-lbl">Deadline *</label>
+          <input type="date" id="tr-date" class="form-control">
+        </div>
+      </div>
+      <div class="form-group" id="tr-status-grp" style="display:none">
+        <label class="form-label">Status</label>
+        <select id="tr-status" class="form-control">
+          <option value="Pending">Pending</option>
+          <option value="Result Awaited">Result Awaited</option>
+          <option value="Won">Won</option>
+          <option value="Lost">Lost</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea id="tr-notes" class="form-control" placeholder="Optional notes..."></textarea>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-outline" onclick="closeModal('modal-tender')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveTender()">Save Tender</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ COMPLETE TENDER MODAL ═══ -->
+<div class="modal-overlay" id="modal-complete">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Mark Tender as Done</div>
+      <button class="modal-close" onclick="closeModal('modal-complete')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="cp-id">
+      <input type="hidden" id="cp-type">
+      <p style="color:#475569;font-size:.88rem;margin-bottom:14px;line-height:1.5">This tender will be moved to <strong>History</strong>. Choose the outcome:</p>
+      <div class="form-group">
+        <label class="form-label">Outcome</label>
+        <select id="cp-outcome" class="form-control">
+          <option value="Result Awaited">Result Awaited</option>
+          <option value="Won">Won</option>
+          <option value="Lost">Lost</option>
+        </select>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-outline" onclick="closeModal('modal-complete')">Cancel</button>
+        <button class="btn btn-success" onclick="confirmComplete()">Move to History</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ▸▸ PASTE YOUR GOOGLE APPS SCRIPT URL BELOW ◂◂
+const API_URL = 'YOUR_SCRIPT_URL_HERE';
+
+let DB = { tasks:[], tendersFill:[], tendersCheck:[], tenderHistory:[] };
+let taskFilter  = 'all';
+let histFilter  = 'all';
+let tenderTab   = 'fill';
+
+// ── Boot ─────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  if (API_URL === 'YOUR_SCRIPT_URL_HERE') {
+    document.getElementById('dash-content').innerHTML = `
+      <div class="setup-banner">
+        <strong>Setup Required — follow these steps:</strong><br>
+        1. Open <a href="https://sheets.google.com" target="_blank">Google Sheets</a> and create a new spreadsheet.<br>
+        2. Click <strong>Extensions → Apps Script</strong>.<br>
+        3. Delete any existing code and paste the entire contents of <code>Code.gs</code>.<br>
+        4. Save, then click <strong>Run → initSheets</strong> (approve permissions).<br>
+        5. Click <strong>Deploy → New deployment → Web app</strong>.<br>
+           Set <em>Execute as: Me</em> and <em>Who has access: Anyone</em>. Click Deploy.<br>
+        6. Copy the Web App URL.<br>
+        7. Open this <code>index.html</code> in a text editor and replace <code>YOUR_SCRIPT_URL_HERE</code> with that URL.<br>
+        8. Save and refresh this page.
+      </div>`;
+    return;
+  }
+  loadAll();
+});
+
+async function loadAll() {
+  try {
+    const r    = await fetch(`${API_URL}?action=getAll`);
+    const data = await r.json();
+    DB.tasks         = data.tasks         || [];
+    DB.tendersFill   = data.tendersFill   || [];
+    DB.tendersCheck  = data.tendersCheck  || [];
+    DB.tenderHistory = data.tenderHistory || [];
+    renderAll();
+  } catch(e) {
+    showToast('Could not load data. Check your API URL.','error',5000);
+  }
+}
+
+function renderAll() {
+  renderDashboard();
+  renderTasks();
+  renderTendersList();
+  renderHistory();
+}
+
+// ── Tabs ─────────────────────────────────────────────────────
+function switchTab(tab) {
+  const names = ['dashboard','tasks','tenders','history'];
+  document.querySelectorAll('.nav-tab').forEach((el,i) => el.classList.toggle('active', names[i]===tab));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(`tab-${tab}`).classList.add('active');
+}
+
+function switchTenderTab(tab, el) {
+  tenderTab = tab;
+  document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-fill').style.display  = tab==='fill'  ? '' : 'none';
+  document.getElementById('panel-check').style.display = tab==='check' ? '' : 'none';
+}
+
+// ── Dashboard ─────────────────────────────────────────────────
+function renderDashboard() {
+  const today  = todayStr();
+  const in7    = daysFromNow(7);
+  const active = DB.tasks.filter(t => t.Status !== 'Done');
+  const overdue   = active.filter(t => t.DueDate && t.DueDate < today);
+  const dueToday  = active.filter(t => t.DueDate === today);
+  const totalTend = DB.tendersFill.length + DB.tendersCheck.length;
+
+  document.getElementById('s-total').textContent  = active.length;
+  document.getElementById('s-over').textContent   = overdue.length;
+  document.getElementById('s-today').textContent  = dueToday.length;
+  document.getElementById('s-tender').textContent = totalTend;
+
+  let html = '';
+
+  if (overdue.length) {
+    html += `<div class="section-title" style="margin-bottom:8px;color:#ef4444">&#9888; Overdue Tasks (${overdue.length})</div>`;
+    overdue.forEach(t => { html += miniTask(t, today); });
+    html += '<div style="height:18px"></div>';
+  }
+
+  if (dueToday.length) {
+    html += `<div class="section-title" style="margin-bottom:8px;color:#f59e0b">&#11044; Due Today (${dueToday.length})</div>`;
+    dueToday.forEach(t => { html += miniTask(t, today); });
+    html += '<div style="height:18px"></div>';
+  }
+
+  const upTenders = DB.tendersFill.filter(t => t.Deadline && t.Deadline >= today && t.Deadline <= in7);
+  if (upTenders.length) {
+    upTenders.sort((a,b) => a.Deadline.localeCompare(b.Deadline));
+    html += `<div class="section-title" style="margin-bottom:8px">Tenders Due in 7 Days (${upTenders.length})</div>`;
+    upTenders.forEach(t => {
+      const daysLeft = daysBetween(today, t.Deadline);
+      html += `<div class="card" style="border-left:4px solid #f59e0b">
+        <div style="font-weight:600">${esc(t.Name)}</div>
+        <div style="font-size:.79rem;color:#64748b;margin-top:3px">${t.Client ? esc(t.Client)+' &middot; ' : ''}${t.RefNo ? 'Ref: '+esc(t.RefNo) : ''}</div>
+        <div style="font-size:.8rem;margin-top:5px;color:#ef4444;font-weight:600">Deadline: ${fmtDate(t.Deadline)} (${daysLeft===0?'Today':daysLeft+' day'+(daysLeft!==1?'s':'')+' left'})</div>
+      </div>`;
+    });
+    html += '<div style="height:18px"></div>';
+  }
+
+  const upcoming = active.filter(t => t.DueDate && t.DueDate > today && t.DueDate <= in7);
+  if (upcoming.length) {
+    upcoming.sort((a,b) => a.DueDate.localeCompare(b.DueDate));
+    html += `<div class="section-title" style="margin-bottom:8px">Upcoming Tasks — Next 7 Days (${upcoming.length})</div>`;
+    upcoming.forEach(t => { html += miniTask(t, today); });
+  }
+
+  if (!html) {
+    html = `<div class="empty"><div class="empty-icon">&#10003;</div><div>All clear! No overdue or upcoming items.</div></div>`;
+  }
+
+  document.getElementById('dash-content').innerHTML = html;
+}
+
+function miniTask(t, today) {
+  const over   = t.DueDate && t.DueDate < today;
+  const td     = t.DueDate === today;
+  return `<div class="card task-card ${(t.Priority||'').toLowerCase()}" style="margin-bottom:7px">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+        <span class="badge badge-${(t.Priority||'').toLowerCase()}">${t.Priority||''}</span>
+        <span style="font-weight:600">${esc(t.Name)}</span>
+        ${t.RecurringType&&t.RecurringType!=='none'?`<span class="recurring-tag">&#128260; ${t.RecurringType}</span>`:''}
+      </div>
+      ${t.DueDate?`<span class="${over?'overdue-txt':td?'today-txt':'normal-date'}">${over?'&#9888; ':td?'&#11044; ':''}${fmtDate(t.DueDate)}</span>`:''}
+    </div>
+  </div>`;
+}
+
+// ── Tasks ─────────────────────────────────────────────────────
+function setTaskFilter(f, el) {
+  taskFilter = f;
+  document.querySelectorAll('#task-filters .filter-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderTasks();
+}
+
+function renderTasks() {
+  const today = todayStr();
+  let list = [...DB.tasks];
+
+  if      (taskFilter === 'all')       list = list.filter(t => t.Status !== 'Done');
+  else if (taskFilter === 'done')      list = list.filter(t => t.Status === 'Done');
+  else if (taskFilter === 'recurring') list = list.filter(t => t.RecurringType && t.RecurringType !== 'none' && t.Status !== 'Done');
+  else                                 list = list.filter(t => t.Priority === taskFilter && t.Status !== 'Done');
+
+  list.sort((a,b) => {
+    if (a.Status==='Done' && b.Status!=='Done') return 1;
+    if (b.Status==='Done' && a.Status!=='Done') return -1;
+    if (a.DueDate && b.DueDate) return a.DueDate.localeCompare(b.DueDate);
+    return a.DueDate ? -1 : b.DueDate ? 1 : 0;
+  });
+
+  if (!list.length) {
+    document.getElementById('tasks-list').innerHTML = `<div class="empty"><div class="empty-icon">&#128203;</div><div>No tasks found.</div></div>`;
+    return;
+  }
+
+  document.getElementById('tasks-list').innerHTML = list.map(t => {
+    const over = t.DueDate && t.DueDate < today && t.Status !== 'Done';
+    const td   = t.DueDate === today && t.Status !== 'Done';
+    const done = t.Status === 'Done';
+    const statusKey = (t.Status||'not-started').toLowerCase().replace(/ /g,'-');
+    let recHtml = '';
+    if (t.RecurringType && t.RecurringType !== 'none') {
+      const dayLabel = t.RecurringType === 'weekly' ? t.RecurringDay : ordinal(t.RecurringDay);
+      recHtml = `<span class="recurring-tag">&#128260; ${t.RecurringType==='weekly'?'Every '+dayLabel:'Monthly · '+dayLabel}</span>`;
+    }
+    return `<div class="card task-card ${(t.Priority||'').toLowerCase()} ${done?'done-task':''}">
+      <div class="task-header">
+        <div class="task-name">${esc(t.Name)}</div>
+        <span class="badge badge-${(t.Priority||'').toLowerCase()}">${t.Priority||''}</span>
+      </div>
+      <div class="task-meta">
+        <span class="badge badge-${statusKey}">${t.Status||'Not Started'}</span>
+        ${t.DueDate?`<span class="${over?'overdue-txt':td?'today-txt':'normal-date'}">${over?'&#9888; Overdue &middot; ':td?'&#11044; Today &middot; ':''}${fmtDate(t.DueDate)}</span>`:''}
+        ${recHtml}
+      </div>
+      ${t.Notes?`<div class="task-notes">${esc(t.Notes)}</div>`:''}
+      <div class="task-actions">
+        ${!done?`<button class="btn btn-success btn-sm" onclick="quickDone('${t.ID}')">&#10003; Done</button>`:''}
+        ${t.Status==='Not Started'?`<button class="btn btn-warning btn-sm" onclick="setStatus('${t.ID}','In Progress')">In Progress</button>`:''}
+        <button class="btn btn-outline btn-sm" onclick="editTask('${t.ID}')">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="delTask('${t.ID}')">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openTaskModal(id) {
+  resetTaskForm();
+  if (id) {
+    const t = DB.tasks.find(x => x.ID === id);
+    if (!t) return;
+    document.getElementById('task-modal-title').textContent = 'Edit Task';
+    document.getElementById('t-id').value       = t.ID;
+    document.getElementById('t-name').value     = t.Name||'';
+    document.getElementById('t-priority').value = t.Priority||'Medium';
+    document.getElementById('t-status').value   = t.Status||'Not Started';
+    document.getElementById('t-due').value      = t.DueDate||'';
+    document.getElementById('t-notes').value    = t.Notes||'';
+    document.getElementById('t-recur').value    = t.RecurringType||'none';
+    toggleRecurDay();
+    document.getElementById('t-recur-day').value = t.RecurringDay||'';
+  } else {
+    document.getElementById('task-modal-title').textContent = 'Add Task';
+  }
+  openModal('modal-task');
+}
+function editTask(id) { openTaskModal(id); }
+
+function resetTaskForm() {
+  ['t-id','t-name','t-due','t-notes'].forEach(i => { document.getElementById(i).value=''; });
+  document.getElementById('t-priority').value = 'Medium';
+  document.getElementById('t-status').value   = 'Not Started';
+  document.getElementById('t-recur').value    = 'none';
+  toggleRecurDay();
+}
+
+function toggleRecurDay() {
+  const type = document.getElementById('t-recur').value;
+  const grp  = document.getElementById('recur-day-grp');
+  const lbl  = document.getElementById('recur-day-lbl');
+  const sel  = document.getElementById('t-recur-day');
+  if (type === 'none') { grp.style.display = 'none'; return; }
+  grp.style.display = '';
+  sel.innerHTML = '';
+  if (type === 'weekly') {
+    lbl.textContent = 'Day of Week';
+    ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].forEach(d => {
+      sel.innerHTML += `<option value="${d}">${d}</option>`;
+    });
+  } else {
+    lbl.textContent = 'Day of Month';
+    for (let i=1;i<=31;i++) sel.innerHTML += `<option value="${i}">${ordinal(i)}</option>`;
+  }
+}
+
+async function saveTask() {
+  const id   = document.getElementById('t-id').value;
+  const name = document.getElementById('t-name').value.trim();
+  if (!name) { showToast('Task name is required','error'); return; }
+  const data = {
+    id, name,
+    priority:      document.getElementById('t-priority').value,
+    status:        document.getElementById('t-status').value,
+    dueDate:       document.getElementById('t-due').value,
+    notes:         document.getElementById('t-notes').value.trim(),
+    recurringType: document.getElementById('t-recur').value,
+    recurringDay:  document.getElementById('t-recur-day').value
+  };
+  await api({ action: id?'updateTask':'addTask', data });
+  closeModal('modal-task');
+  await loadAll();
+  showToast(id?'Task updated':'Task added','success');
+}
+
+async function quickDone(id) {
+  const t = DB.tasks.find(x => x.ID === id);
+  if (!t) return;
+  await api({ action:'updateTask', data:{...t, id:t.ID, status:'Done'} });
+  if (t.RecurringType && t.RecurringType !== 'none') {
+    const nextDate = nextRecurDate(t.RecurringType, t.RecurringDay);
+    await api({ action:'addTask', data:{ name:t.Name, priority:t.Priority, notes:t.Notes,
+      dueDate:nextDate, status:'Not Started', recurringType:t.RecurringType, recurringDay:t.RecurringDay }});
+    showToast('Done! Next occurrence created for '+fmtDate(nextDate),'success',3500);
+  } else {
+    showToast('Task marked as done!','success');
+  }
+  await loadAll();
+}
+
+async function setStatus(id, status) {
+  const t = DB.tasks.find(x => x.ID === id);
+  if (!t) return;
+  await api({ action:'updateTask', data:{...t, id:t.ID, status} });
+  await loadAll();
+  showToast('Status updated','success');
+}
+
+async function delTask(id) {
+  if (!confirm('Delete this task?')) return;
+  await api({ action:'deleteTask', id });
+  await loadAll();
+  showToast('Task deleted');
+}
+
+function nextRecurDate(type, day) {
+  const now = new Date();
+  if (type === 'weekly') {
+    const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const target = days.indexOf(day);
+    let diff = target - now.getDay();
+    if (diff <= 0) diff += 7;
+    const d = new Date(now); d.setDate(now.getDate()+diff);
+    return d.toISOString().split('T')[0];
+  } else {
+    const d = new Date(now.getFullYear(), now.getMonth()+1, parseInt(day));
+    return d.toISOString().split('T')[0];
+  }
+}
+
+// ── Tenders ───────────────────────────────────────────────────
+function renderTendersList() {
+  const today = todayStr();
+  document.getElementById('fill-ct').textContent  = DB.tendersFill.length  ? `(${DB.tendersFill.length})`  : '';
+  document.getElementById('check-ct').textContent = DB.tendersCheck.length ? `(${DB.tendersCheck.length})` : '';
+
+  const renderList = (list, type, containerId, emptyIcon, emptyMsg) => {
+    if (!list.length) {
+      document.getElementById(containerId).innerHTML = `<div class="empty"><div class="empty-icon">${emptyIcon}</div><div>${emptyMsg}</div></div>`;
+      return;
+    }
+    const sorted = [...list].sort((a,b) => {
+      const da = type==='fill' ? a.Deadline : a.CheckDate;
+      const db = type==='fill' ? b.Deadline : b.CheckDate;
+      return (da||'').localeCompare(db||'');
+    });
+    document.getElementById(containerId).innerHTML = sorted.map(t => tenderCard(t, type, today)).join('');
+  };
+
+  renderList(DB.tendersFill,  'fill',  'list-fill',  '&#128196;', 'No tenders to fill yet.');
+  renderList(DB.tendersCheck, 'check', 'list-check', '&#128269;', 'No tenders to check yet.');
+}
+
+function tenderCard(t, type, today) {
+  const dateVal = type==='fill' ? t.Deadline : t.CheckDate;
+  const dateKey = type==='fill' ? 'Deadline' : 'Check Date';
+  const over    = dateVal && dateVal < today;
+  const td      = dateVal === today;
+  const statVal = t.Status || (type==='fill' ? 'Active' : 'Pending');
+  const statKey = statVal.toLowerCase().replace(/ /g,'-');
+
+  return `<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div class="tender-name">${esc(t.Name)}</div>
+      <span class="badge badge-${statKey}">${statVal}</span>
+    </div>
+    <div class="tender-details">
+      ${t.RefNo          ? `<div class="tender-detail">Ref No: <span>${esc(t.RefNo)}</span></div>` : ''}
+      ${t.Client         ? `<div class="tender-detail">Client: <span>${esc(t.Client)}</span></div>` : ''}
+      ${t.SubmissionMode ? `<div class="tender-detail">Mode: <span>${esc(t.SubmissionMode)}</span></div>` : ''}
+      ${t.EstimatedValue ? `<div class="tender-detail">Est. Value: <span>&#8377;${esc(t.EstimatedValue)}</span></div>` : ''}
+      ${dateVal ? `<div class="tender-detail">${dateKey}: <span class="${over?'dl-warn':td?'dl-today':''}">${over?'&#9888; ':td?'&#11044; ':''}${fmtDate(dateVal)}</span></div>` : ''}
+    </div>
+    ${t.Notes ? `<div class="task-notes" style="margin-top:7px">${esc(t.Notes)}</div>` : ''}
+    <div class="tender-actions">
+      <button class="btn btn-success btn-sm" onclick="promptComplete('${t.ID}','${type}')">&#10003; Done</button>
+      <button class="btn btn-outline btn-sm" onclick="editTender('${t.ID}','${type}')">Edit</button>
+      <button class="btn btn-danger btn-sm" onclick="delTender('${t.ID}','${type}')">Delete</button>
+    </div>
+  </div>`;
+}
+
+function openTenderModal(type, id) {
+  resetTenderForm();
+  document.getElementById('tr-type').value = type;
+  const isCheck = type === 'check';
+  document.getElementById('tr-date-lbl').textContent = isCheck ? 'Check Date' : 'Deadline';
+  document.getElementById('tr-status-grp').style.display = isCheck ? '' : 'none';
+
+  if (id) {
+    const arr = isCheck ? DB.tendersCheck : DB.tendersFill;
+    const t   = arr.find(x => x.ID === id);
+    if (!t) return;
+    document.getElementById('tender-modal-title').textContent = 'Edit Tender';
+    document.getElementById('tr-id').value     = t.ID;
+    document.getElementById('tr-name').value   = t.Name||'';
+    document.getElementById('tr-ref').value    = t.RefNo||'';
+    document.getElementById('tr-client').value = t.Client||'';
+    document.getElementById('tr-mode').value   = t.SubmissionMode||'';
+    document.getElementById('tr-value').value  = t.EstimatedValue||'';
+    document.getElementById('tr-date').value   = (isCheck ? t.CheckDate : t.Deadline)||'';
+    document.getElementById('tr-notes').value  = t.Notes||'';
+    if (isCheck) document.getElementById('tr-status').value = t.Status||'Pending';
+  } else {
+    document.getElementById('tender-modal-title').textContent = isCheck ? 'Add Tender to Check' : 'Add Tender to Fill';
+  }
+  openModal('modal-tender');
+}
+function editTender(id, type) { openTenderModal(type, id); }
+
+function resetTenderForm() {
+  ['tr-id','tr-name','tr-ref','tr-client','tr-value','tr-date','tr-notes'].forEach(i => { document.getElementById(i).value=''; });
+  document.getElementById('tr-mode').value   = '';
+  document.getElementById('tr-status').value = 'Pending';
+}
+
+async function saveTender() {
+  const id   = document.getElementById('tr-id').value;
+  const type = document.getElementById('tr-type').value;
+  const name = document.getElementById('tr-name').value.trim();
+  if (!name) { showToast('Tender name is required','error'); return; }
+
+  const data = {
+    id, name,
+    refNo:          document.getElementById('tr-ref').value.trim(),
+    client:         document.getElementById('tr-client').value.trim(),
+    submissionMode: document.getElementById('tr-mode').value,
+    estimatedValue: document.getElementById('tr-value').value.trim(),
+    notes:          document.getElementById('tr-notes').value.trim(),
+    ...(type==='fill' ? { deadline: document.getElementById('tr-date').value }
+                      : { checkDate: document.getElementById('tr-date').value,
+                          status:    document.getElementById('tr-status').value })
+  };
+
+  const actionMap = {
+    fill:  { add:'addTenderFill',  update:'updateTenderFill' },
+    check: { add:'addTenderCheck', update:'updateTenderCheck' }
+  };
+  await api({ action: id ? actionMap[type].update : actionMap[type].add, data });
+  closeModal('modal-tender');
+  await loadAll();
+  showToast(id ? 'Tender updated' : 'Tender added','success');
+}
+
+function promptComplete(id, type) {
+  document.getElementById('cp-id').value      = id;
+  document.getElementById('cp-type').value    = type;
+  document.getElementById('cp-outcome').value = 'Result Awaited';
+  openModal('modal-complete');
+}
+
+async function confirmComplete() {
+  const id      = document.getElementById('cp-id').value;
+  const type    = document.getElementById('cp-type').value;
+  const outcome = document.getElementById('cp-outcome').value;
+  const action  = type==='fill' ? 'completeTenderFill' : 'completeTenderCheck';
+  await api({ action, id, outcome });
+  closeModal('modal-complete');
+  await loadAll();
+  showToast('Tender moved to history','success');
+}
+
+async function delTender(id, type) {
+  if (!confirm('Delete this tender?')) return;
+  const action = type==='fill' ? 'deleteTenderFill' : 'deleteTenderCheck';
+  await api({ action, id });
+  await loadAll();
+  showToast('Tender deleted');
+}
+
+// ── History ───────────────────────────────────────────────────
+function setHistFilter(f, el) {
+  histFilter = f;
+  document.querySelectorAll('#hist-filters .filter-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderHistory();
+}
+
+function renderHistory() {
+  let list = [...DB.tenderHistory];
+  if (histFilter !== 'all') {
+    if (histFilter==='Fill'||histFilter==='Check') list = list.filter(h => h.OriginalType===histFilter);
+    else list = list.filter(h => h.Outcome===histFilter);
+  }
+
+  if (!list.length) {
+    document.getElementById('hist-content').innerHTML = `<div class="empty"><div class="empty-icon">&#128218;</div><div>No history yet. Complete a tender to see it here.</div></div>`;
+    return;
+  }
+
+  list.sort((a,b) => (b.CompletedDate||'').localeCompare(a.CompletedDate||''));
+
+  const rows = list.map(h => {
+    const outKey = (h.Outcome||'').toLowerCase().replace(/ /g,'-');
+    const typKey = h.OriginalType==='Fill' ? 'submitted' : 'checked';
+    return `<tr>
+      <td>${esc(h.Name)}</td>
+      <td>${esc(h.RefNo||'-')}</td>
+      <td>${esc(h.Client||'-')}</td>
+      <td>${h.EstimatedValue ? '&#8377;'+esc(h.EstimatedValue) : '-'}</td>
+      <td>${fmtDate(h.DeadlineOrCheckDate||'')}</td>
+      <td><span class="badge badge-${typKey}">${h.OriginalType==='Fill'?'Submitted':'Checked'}</span></td>
+      <td><span class="badge badge-${outKey}">${h.Outcome||'-'}</span></td>
+      <td>${fmtDate((h.CompletedDate||'').split('T')[0])}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('hist-content').innerHTML = `
+    <div class="hist-wrap">
+    <table class="history-table">
+      <thead><tr><th>Tender Name</th><th>Ref No.</th><th>Client</th><th>Est. Value</th><th>Deadline / Check</th><th>Type</th><th>Outcome</th><th>Completed</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>`;
+}
+
+// ── API ───────────────────────────────────────────────────────
+async function api(body) {
+  const r = await fetch(API_URL, { method:'POST', body: JSON.stringify(body) });
+  const d = await r.json();
+  if (d && d.error) { showToast('Error: '+d.error,'error'); throw new Error(d.error); }
+  return d;
+}
+
+// ── Modal helpers ─────────────────────────────────────────────
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target===m) m.classList.remove('open'); });
+});
+
+// ── Toast ─────────────────────────────────────────────────────
+let _tt;
+function showToast(msg, type='', ms=2500) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `toast ${type} show`;
+  clearTimeout(_tt);
+  _tt = setTimeout(() => el.classList.remove('show'), ms);
+}
+
+// ── Utils ─────────────────────────────────────────────────────
+function todayStr()     { return new Date().toISOString().split('T')[0]; }
+function daysFromNow(n) { const d=new Date(); d.setDate(d.getDate()+n); return d.toISOString().split('T')[0]; }
+function daysBetween(a, b) {
+  return Math.round((new Date(b)-new Date(a))/(1000*60*60*24));
+}
+function fmtDate(s) {
+  if (!s) return '';
+  const d = new Date(s+'T00:00:00');
+  return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+}
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function ordinal(n) {
+  const s=['th','st','nd','rd'], v=n%100;
+  return n+(s[(v-20)%10]||s[v]||s[0]);
+}
+</script>
+</body>
+</html>
