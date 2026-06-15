@@ -382,7 +382,7 @@ textarea.form-control{resize:vertical;min-height:72px}
 
 <script>
 // ▸▸ PASTE YOUR GOOGLE APPS SCRIPT URL BELOW ◂◂
-const API_URL = 'YOUR_SCRIPT_URL_HERE';
+const API_URL = 'https://script.google.com/macros/s/AKfycbyvHrS96EPWvIjocUh0b1_3wufWTgk0B9UcsqQIGuabcCKx3H7BGgST_-_mh7apGepIfw/exec';
 
 let DB = { tasks:[], tendersFill:[], tendersCheck:[], tenderHistory:[] };
 let taskFilter  = 'all';
@@ -391,7 +391,7 @@ let tenderTab   = 'fill';
 
 // ── Boot ─────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
-  if (API_URL === 'YOUR_SCRIPT_URL_HERE') {
+  if (API_URL === 'https://script.google.com/macros/s/AKfycbyvHrS96EPWvIjocUh0b1_3wufWTgk0B9UcsqQIGuabcCKx3H7BGgST_-_mh7apGepIfw/exec') {
     document.getElementById('dash-content').innerHTML = `
       <div class="setup-banner">
         <strong>Setup Required — follow these steps:</strong><br>
@@ -402,7 +402,7 @@ window.addEventListener('DOMContentLoaded', () => {
         5. Click <strong>Deploy → New deployment → Web app</strong>.<br>
            Set <em>Execute as: Me</em> and <em>Who has access: Anyone</em>. Click Deploy.<br>
         6. Copy the Web App URL.<br>
-        7. Open this <code>index.html</code> in a text editor and replace <code>YOUR_SCRIPT_URL_HERE</code> with that URL.<br>
+        7. Open this <code>index.html</code> in a text editor and replace <code>https://script.google.com/macros/s/AKfycbyvHrS96EPWvIjocUh0b1_3wufWTgk0B9UcsqQIGuabcCKx3H7BGgST_-_mh7apGepIfw/exec</code> with that URL.<br>
         8. Save and refresh this page.
       </div>`;
     return;
